@@ -33,3 +33,7 @@
 *.exe
 *.out
 *.app
+
+# Program generated files 
+Хаффман/output.txt
+Кодер/out_tab.txt
