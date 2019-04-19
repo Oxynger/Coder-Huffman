@@ -3,14 +3,14 @@
 #include <map>
 #include <list>
 #include <fstream>
+#include <assert.h>
 
 using namespace std;
 
-class Node
+struct Node
 {
-  public:
-	int a;				// Число
-	char c;				//Символ
+	int BinaryCode;				// Число
+	char Character;				//Символ
 	Node *left, *right; //Указатель  узел
 
 	Node() { left = right = NULL; }
@@ -19,13 +19,13 @@ class Node
 	{
 		left = L;
 		right = R;
-		a = L->a + R->a;
+		BinaryCode = L->BinaryCode + R->BinaryCode;
 	}
 };
 
 struct MyCompare
 {
-	bool operator()(const Node *l, const Node *r) const { return l->a < r->a; }
+	bool operator()(const Node *l, const Node *r) const { return l->BinaryCode < r->BinaryCode; }
 };
 
 vector<bool> code;
@@ -46,68 +46,62 @@ void BuildTable(Node *root) //Заполнение таллицы
 	}
 
 	if (root->left == NULL && root->right == NULL)
-		table[root->c] = code;
+		table[root->Character] = code;
 
 	code.pop_back(); // Удаление одного символа с конца
 }
 
-int main(int argc, char *argv[])
-{
-	////// считаем частоты символов
-	ifstream f("1.txt", ios::out | ios::binary);
+////// считаем частоты символов
+map<char, int> CountOfSymbolsFromFile(ifstream &file){
+	map<char, int> mapSymbols;
 
-	map<char, int> m;
-
-	while (!f.eof())
+	while (!file.eof())
 	{
-		char c = f.get();
-		m[c]++;
+		char c = file.get();
+		mapSymbols[c]++;
 	}
 
-	////// записываем начальные узлы в список list
+	return mapSymbols;
+}
 
-	list<Node *> t;
-	for (map<char, int>::iterator itr = m.begin(); itr != m.end(); ++itr)
+////// записываем начальные узлы в список list
+list<Node *> InitHuffmanTree(map <char,int> mapSymbols){
+	list<Node *> HuffmanTree;
+
+	for (map<char, int>::iterator itr = mapSymbols.begin(); itr != mapSymbols.end(); ++itr)
 	{
 		Node *p = new Node; //Создание в динамической память нового узла
-		p->c = itr->first;
-		p->a = itr->second;
-		t.push_back(p);
+		p->Character = itr->first;
+		p->BinaryCode = itr->second;
+		HuffmanTree.push_back(p);
 	}
 
-	//////  создаем дерево
+	return HuffmanTree;
+}
 
-	while (t.size() != 1)
+//////  создаем дерево
+void FillHuffmanTree(list<Node *> &HuffmanTree){
+	while (HuffmanTree.size() != 1)
 	{
-		t.sort(MyCompare()); // сортировка списка
+		HuffmanTree.sort(MyCompare()); // сортировка списка
 
-		Node *SonL = t.front();
-		t.pop_front();
-		Node *SonR = t.front();
-		t.pop_front();
+		Node *SonL = HuffmanTree.front();
+		HuffmanTree.pop_front();
+		Node *SonR = HuffmanTree.front();
+		HuffmanTree.pop_front();
 
 		Node *parent = new Node(SonL, SonR); //Создание узла
-		t.push_back(parent);
+		HuffmanTree.push_back(parent);
 	}
 
-	Node *root = t.front(); //root - указатель на вершину дерева
+}
 
-	////// создаем пары 'символ-код':
-
-	BuildTable(root);
-
-	////// Выводим коды в файл output.txt
-
-	f.clear();
-	f.seekg(0); // перемещаем указатель снова в начало файла
-
-	ofstream g("output.txt", ios::out | ios::binary);
-
+int ComputeCount(ifstream &fileIn, ofstream &fileOut){
 	int count = 0;
 	char buf = 0;
-	while (!f.eof()) //Считываение из файла
+	while (!fileIn.eof()) //Считываение из файла
 	{
-		char c = f.get();
+		char c = fileIn.get();
 		vector<bool> x = table[c];
 		for (int n = 0; n < x.size(); n++)
 		{
@@ -116,26 +110,21 @@ int main(int argc, char *argv[])
 			if (count == 8)
 			{
 				count = 0;
-				g << buf;
+				fileOut << buf;
 				buf = 0;
 			}
 		}
 	}
 
-	f.close();
-	g.close();
+	return count;
+}
 
-	///// считывание из файла output.txt и преобразование обратно
-
-	ifstream F("output.txt", ios::in | ios::binary);
-
-	setlocale(LC_ALL, "Russian"); // чтоб русские символы отображались в командной строке
-
+void Decrypt(Node *root, ifstream &fileIn){
 	Node *p = root;
-	count = 0;
+	int count = 0;
 	char byte;
-	byte = F.get();
-	while (!F.eof()) // Перевод нулей и единиц обратно в символы
+	byte = fileIn.get();
+	while (!fileIn.eof()) // Перевод нулей и единиц обратно в символы
 	{
 		bool b = byte & (1 << (7 - count));
 		if (b)
@@ -144,18 +133,56 @@ int main(int argc, char *argv[])
 			p = p->left;
 		if (p->left == NULL && p->right == NULL)
 		{
-			cout << p->c;
+			cout << p->Character;
 			p = root;
 		}
 		count++;
 		if (count == 8)
 		{
 			count = 0;
-			byte = F.get();
+			byte = fileIn.get();
 		}
 	}
 
-	F.close();
+}
+
+int main(int argc, char *argv[])
+{	
+	ifstream fileIn("1.txt", ios::out | ios::binary);
+
+	auto mapSymbols = CountOfSymbolsFromFile(fileIn);
+
+	auto HuffmanTree = InitHuffmanTree(mapSymbols); 
+
+	FillHuffmanTree(HuffmanTree);
+
+	//root - указатель на вершину дерева
+	Node *root = HuffmanTree.front();
+	
+	////// создаем пары 'символ-код':
+
+	BuildTable(root);
+
+	////// Выводим коды в файл output.txt
+	fileIn.clear();
+	fileIn.seekg(0); // перемещаем указатель снова в начало файла
+
+	ofstream fileOut("output.txt", ios::out | ios::binary);
+
+	auto count = ComputeCount(fileIn, fileOut);
+
+	fileIn.close();
+	fileOut.close();
+
+	///// считывание из файла output.txt и преобразование обратно
+
+	ifstream DecryptedFile("output.txt", ios::in | ios::binary);
+
+	setlocale(LC_ALL, "Russian"); // чтоб русские символы отображались в командной строке
+
+	Decrypt(root, DecryptedFile);
+
+	DecryptedFile.close();
 
 	return 0;
 }
