@@ -62,9 +62,9 @@ map<char, int> CountOfSymbolsFromFile(ifstream &file)
 {
 	map<char, int> mapSymbols;
 
-	while (!file.eof())
+	char c;
+	while (file.get(c))
 	{
-		char c = file.get();
 		mapSymbols[c]++;
 	}
 
@@ -87,7 +87,7 @@ list<Node *> InitHuffmanTree(map<char, int> mapSymbols)
 	return HuffmanTree;
 }
 
-//////  создаем дерево
+////// Cоздаем дерево
 void FillHuffmanTree(list<Node *> &HuffmanTree)
 {
 	while (HuffmanTree.size() != 1)
@@ -104,55 +104,106 @@ void FillHuffmanTree(list<Node *> &HuffmanTree)
 	}
 }
 
-int ComputeCount(ifstream &fileIn, ofstream &fileOut, map<char, vector<bool>> table)
+// Кодируем файл, записываем коды символов в выходной файл с результатом
+void EncriptFile(ifstream &fileIn, ofstream &fileOut, map<char, vector<bool>> table, string Separator)
 {
-	int count = 0;
-	char buf = 0;
-	while (!fileIn.eof()) //Считываение из файла
-	{
-		char c = fileIn.get();
-		vector<bool> x = table[c];
-		for (int n = 0; n < x.size(); n++)
-		{
-			buf = buf | x[n] << (7 - count);
-			count++;
-			if (count == 8)
-			{
-				count = 0;
-				fileOut << buf;
-				buf = 0;
-			}
-		}
-	}
+	string buf;
 
-	return count;
+	char c;
+
+	//Считываение из файла
+	while (fileIn.get(c))
+	{
+		vector<bool> symbolCode = table[c];
+
+		// Коверитрируем из вектора булевых значений в строку
+		for (auto i : symbolCode)
+		{
+			buf.append(to_string(i));
+		}
+
+		// Добавляем разделитель к кодам закодированных символов
+		buf.append(Separator);
+
+		// Записываем строку с кодами символов в файл
+		fileOut << buf;
+
+		// Очищаем файл с кодами после записи
+		buf.clear();
+	}
 }
 
-void Decrypt(Node *root, ifstream &fileIn)
+void Decrypt(ifstream &fileIn, map<char, vector<bool>> table, string Separator)
 {
-	Node *p = root;
-	int count = 0;
-	char byte;
-	byte = fileIn.get();
-	while (!fileIn.eof()) // Перевод нулей и единиц обратно в символы
+	char character;
+	string bites;
+
+	vector<bool> characterMask;
+
+	// Конвертирует строку с кодом символа в 
+	auto stringToMask = [&]() {
+		for (auto bite : bites)
+			// Если код символа равен символу 1 то записываем true иначе false
+			characterMask.push_back(bite == '1');
+	};
+
+	// Поиск символа по битовой маске ( коду ) в таблице с алфавитом
+	auto findSymbolByCode = [&](){
+			for (auto it = table.begin(); it != table.end(); ++it)
+			{
+				if (it->second == characterMask)
+				{
+					cout << it->first;
+				}
+			}
+	};
+
+
+	// Перевод нулей и единиц обратно в символы и вывод результата на консоль
+	cout << "Resault of decoding: ";
+	while (fileIn.get(character))
 	{
-		bool b = byte & (1 << (7 - count));
-		if (b)
-			p = p->right;
-		else
-			p = p->left;
-		if (p->left == NULL && p->right == NULL)
+		// Прверка что мы не дошли до разделителя
+		if (character != *Separator.data())
 		{
-			cout << p->Character;
-			p = root;
+			bites += character;
 		}
-		count++;
-		if (count == 8)
+		
+		else
 		{
-			count = 0;
-			byte = fileIn.get();
+			stringToMask();
+			findSymbolByCode();
+
+			characterMask.clear();
+			bites.clear();
 		}
 	}
+	cout << endl;
+}
+
+// Вывод таблицы кодов символов
+void PrintTable(map<char, vector<bool>> symbolsCodes)
+{
+	cout << "Symbol codes:" << endl;
+	for (auto it = symbolsCodes.begin(); it != symbolsCodes.end(); ++it)
+	{
+		cout << it->first << " : ";
+
+		for (auto &&i : it->second)
+			cout << i;
+
+		cout << endl;
+	}
+	cout << endl;
+}
+
+// Вывод количиства количества символов
+void PrintSymbolsCount(map<char, int> symbolsCount)
+{
+	cout << "Count of symbols:" << endl;
+	for (auto it = symbolsCount.begin(); it != symbolsCount.end(); ++it)
+		cout << it->first << " : " << it->second << endl;
+	cout << endl;
 }
 
 int main(int argc, char *argv[])
@@ -160,6 +211,8 @@ int main(int argc, char *argv[])
 	ifstream fileIn("1.txt", ios::out | ios::binary);
 
 	auto mapSymbols = CountOfSymbolsFromFile(fileIn);
+
+	PrintSymbolsCount(mapSymbols);
 
 	auto HuffmanTree = InitHuffmanTree(mapSymbols);
 
@@ -172,13 +225,17 @@ int main(int argc, char *argv[])
 
 	auto table = CreateTable(root);
 
+	PrintTable(table);
 	////// Выводим коды в файл output.txt
 	fileIn.clear();
 	fileIn.seekg(0); // перемещаем указатель снова в начало файла
 
 	ofstream fileOut("output.txt", ios::out | ios::binary);
 
-	auto count = ComputeCount(fileIn, fileOut, table);
+
+	// Разделитель битов для записи в файл и декодирования
+	string Separator = " ";
+	EncriptFile(fileIn, fileOut, table, Separator);
 
 	fileIn.close();
 	fileOut.close();
@@ -189,7 +246,7 @@ int main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "Russian"); // чтоб русские символы отображались в командной строке
 
-	Decrypt(root, DecryptedFile);
+	Decrypt(DecryptedFile, table, Separator);
 
 	DecryptedFile.close();
 
