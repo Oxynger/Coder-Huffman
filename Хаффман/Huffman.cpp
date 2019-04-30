@@ -28,7 +28,7 @@ struct MyCompare
 	bool operator()(const Node *l, const Node *r) const { return l->BinaryCode < r->BinaryCode; }
 };
 
-map<char, vector<bool>> CreateTable(Node *root) //Заполнение таллицы
+map<char, vector<bool>> CreateEncyptedTable(Node *root) //Заполнение таллицы
 {
 	// Создание статической переменной для того, чтобы ее значения были одинаковыми во время рекурсии
 	static map<char, vector<bool>> table;
@@ -39,13 +39,13 @@ map<char, vector<bool>> CreateTable(Node *root) //Заполнение талл�
 		if (root->left != NULL)
 		{
 			code.push_back(0);
-			CreateTable(root->left);
+			CreateEncyptedTable(root->left);
 		}
 
 		if (root->right != NULL)
 		{
 			code.push_back(1);
-			CreateTable(root->right);
+			CreateEncyptedTable(root->right);
 		}
 
 		if (root->left == NULL && root->right == NULL)
@@ -221,10 +221,10 @@ int main(int argc, char *argv[])
 	Node *root = HuffmanTree.front();
 
 	////// создаем пары 'символ-код':
+	auto EncyptedTable = CreateEncyptedTable(root);
 
-	auto table = CreateTable(root);
+	PrintTable(EncyptedTable);
 
-	PrintTable(table);
 	////// Выводим коды в файл output.txt
 	fileIn.clear();
 	fileIn.seekg(0); // перемещаем указатель снова в начало файла
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 
 	// Разделитель битов для записи в файл и декодирования
 	string Separator = " ";
-	EncriptFile(fileIn, fileOut, table, Separator);
+	EncriptFile(fileIn, fileOut, EncyptedTable, Separator);
 
 	fileIn.close();
 	fileOut.close();
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "Russian"); // чтоб русские символы отображались в командной строке
 
-	Decrypt(DecryptedFile, table, Separator);
+	Decrypt(DecryptedFile, EncyptedTable, Separator);
 
 	DecryptedFile.close();
 

@@ -13,7 +13,7 @@ void clear_file(string filePath)
     f.close();
 }
 
-map<char, int> CreateASCIITable()
+map<char, int> createASCIITable()
 {
     map<char, int> ASCII;
     for (int i = 0; i < 256; ++i)
@@ -43,9 +43,11 @@ void WriteTable(vector<vector<int>> tableHuffman, string filePath)
 
 vector<vector<int>> CreateTableHuffman(const string &input_str)
 {
-    auto ASCII = CreateASCIITable();
+    // Количество бит в кодеровки (ASCII - 255)
+    size_t encryptBitCount = 255;
+    auto ASCII = createASCIITable();
 
-    vector<vector<int>> tableHuffman(255, vector<int>(255));
+    vector<vector<int>> tableHuffman(encryptBitCount, vector<int>(encryptBitCount));
 
     string str = input_str;
 
@@ -57,8 +59,6 @@ vector<vector<int>> CreateTableHuffman(const string &input_str)
         cout << codeSecondLetter << endl;
 
         tableHuffman[codeFirstLetter][codeSecondLetter]++;
-        if (codeFirstLetter == 255 && codeSecondLetter == 2)
-            cout << "HI-------------------" << endl;
 
         codeFirstLetter = codeSecondLetter;
     }
@@ -88,7 +88,7 @@ int main()
         }
     }
 
-    vector<vector<int> > HuffmanTable;
+    vector<vector<int>> HuffmanTable;
 
     HuffmanTable = CreateTableHuffman(fullText);
 
