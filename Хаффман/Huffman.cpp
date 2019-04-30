@@ -140,7 +140,7 @@ void Decrypt(ifstream &fileIn, map<char, vector<bool>> table, string Separator)
 
 	vector<bool> characterMask;
 
-	// Конвертирует строку с кодом символа в 
+	// Конвертирует строку с кодом символа в
 	auto stringToMask = [&]() {
 		for (auto bite : bites)
 			// Если код символа равен символу 1 то записываем true иначе false
@@ -148,16 +148,15 @@ void Decrypt(ifstream &fileIn, map<char, vector<bool>> table, string Separator)
 	};
 
 	// Поиск символа по битовой маске ( коду ) в таблице с алфавитом
-	auto findSymbolByCode = [&](){
-			for (auto it = table.begin(); it != table.end(); ++it)
+	auto findSymbolByCode = [&]() {
+		for (auto it = table.begin(); it != table.end(); ++it)
+		{
+			if (it->second == characterMask)
 			{
-				if (it->second == characterMask)
-				{
-					cout << it->first;
-				}
+				cout << it->first;
 			}
+		}
 	};
-
 
 	// Перевод нулей и единиц обратно в символы и вывод результата на консоль
 	cout << "Resault of decoding: ";
@@ -168,7 +167,7 @@ void Decrypt(ifstream &fileIn, map<char, vector<bool>> table, string Separator)
 		{
 			bites += character;
 		}
-		
+
 		else
 		{
 			stringToMask();
@@ -231,7 +230,6 @@ int main(int argc, char *argv[])
 	fileIn.seekg(0); // перемещаем указатель снова в начало файла
 
 	ofstream fileOut("output.txt", ios::out | ios::binary);
-
 
 	// Разделитель битов для записи в файл и декодирования
 	string Separator = " ";

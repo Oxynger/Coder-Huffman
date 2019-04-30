@@ -11,8 +11,6 @@
 using namespace std;
 
 vector<string> alpf, alp_num, alp_pun, alp_all_alpf;
-int tableHuffman[255][255];
-map<char, int> ASCII;
 
 void record_alpf()
 {
@@ -56,56 +54,61 @@ void clear_file()
     ofstream f;
     f.open("out_tab.txt", ios::out | ios::trunc);
     f.close();
-    //    f.open("out2.txt", ios::out | ios::trunc);
-    //    f.close();
 }
 
-void FillASCII()
+map<char, int> CreateASCIITable()
 {
+    map<char, int> ASCII;
     for (int i = 0; i < 256; ++i)
-    {
-        cout << i << " : " << (char)i << endl;
         ASCII[(char)i] = i;
-    }
+
+    return ASCII;
 }
 
-void WriteTable()
+
+// Записываем таблицу хафмана в файл
+void WriteTable(vector<vector<int> > tableHuffman, string filePath)
 {
-    ofstream out("out_tab.txt", ios_base::app);
+    ofstream out(filePath, ios_base::app);
     if (out.is_open())
     {
-        for (int it = 0; it < 256; ++it)
+        for (auto Line : tableHuffman)
         {
-            for (int i = 0; i < 256; ++i)
+            for (auto Value : Line)
             {
-
-                out << tableHuffman[it][i] << " ";
+                out << Value << " ";
             }
-            out << '\n';
+            out << endl;
         }
+        
     }
+
     out.close();
 }
 
-void CreateTableHuffman(const string &input_str)
+vector<vector<int> > CreateTableHuffman(const string &input_str)
 {
+    auto ASCII = CreateASCIITable();
+
+    vector<vector<int> > tableHuffman(255, vector<int>(255));
+
     string str = input_str;
-    int codeFirstLetter = ASCII[str[0]];
+
+    int codeFirstLetter = ASCII[str.at(0)];
     cout << codeFirstLetter << endl;
-    for (int i = 0; i < strlen(str.c_str()); ++i)
+    for (int i = 1; i < str.length(); i++)
     {
-        int codeSecondLetter = ASCII[str[i + 1]];
+        int codeSecondLetter = ASCII[str.at(i)];
         cout << codeSecondLetter << endl;
+        
         tableHuffman[codeFirstLetter][codeSecondLetter]++;
         if (codeFirstLetter == 255 && codeSecondLetter == 2)
             cout << "HI-------------------" << endl;
 
         codeFirstLetter = codeSecondLetter;
     }
-    //            for (std::map<char, int>::iterator it = m.begin(); it != m.end(); ++it)
-    //            {
-    //                cout << it->first << " : " << it->second << endl;
-    //            }
+    
+    return tableHuffman;
 }
 
 void Coding()
@@ -118,35 +121,58 @@ void DeCoding(string str)
 
 int main()
 {
-    setlocale(0, "");
+    setlocale(LC_ALL, "Russian");
+
     char name_file[20] = "inp.txt";
-    FillASCII();
+
+    CreateASCIITable();
+
     cout << "Имя файла: " << name_file << endl;
-    //    record_alpf();
+
     clear_file();
+
     fstream infile;
     infile.open(name_file, ios::in);
+
+    string fullText;
     if (infile.is_open())
-        while (!infile.eof())
+    {
+        string line;
+        while (getline(infile, line))
         {
-            string str;
-            getline(infile, str);
-            if (!str[0])
-                continue; // пропуск пустых строк
-            CreateTableHuffman(str);
+            fullText.append(line);
             Coding();
         }
+    }
+    
+    vector<vector<int> > HuffmanTable;
+    try
+    {    
+        HuffmanTable = CreateTableHuffman(fullText);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "in CreateTableHuffman functon" << endl;
+        std::cerr << e.what() << '\n';
+    }
+        
     infile.close();
-    WriteTable();
+    
+    WriteTable(HuffmanTable, "out_tab.txt");
+
     fstream infdec;
     infdec.open("out.txt", ios::in);
-    if (infdec.is_open())
+
+    if (!infdec.is_open())
+    {
         while (!infdec.eof())
         {
             string str;
             getline(infdec, str);
             DeCoding(str);
         }
+    }
+
     infdec.close();
 
     return 0;
