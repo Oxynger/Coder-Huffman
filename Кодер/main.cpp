@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include "./Huffman/Huffman.hpp"
 
 using namespace std;
 
@@ -31,9 +32,9 @@ public:
     CountOfSymbols() : map()
     {
         // Заполняем количество символов нулями.
-        for (char line = 0; line < encodingBites + 1; line++)
+        for (int line = 0; line < encodingBites; line++)
         {
-            for (char column = 0; column < encodingBites + 1; column++)
+            for (int column = 0; column < encodingBites; column++)
             {
                 (*this)[line][column] = 0;
             }
@@ -69,7 +70,7 @@ public:
 
             for (auto Number = Line.begin(); Number != Line.end(); Number++)
             {
-                out << Number->second << "  ";
+                out << Number->second << " ";
             }
 
             out << endl;
@@ -93,10 +94,6 @@ map<char, int> createASCIITable()
     return ASCII;
 }
 
-string ForamtCountOfSymbols(CountOfSymbols symbols)
-{
-}
-
 // Записываем таблицу хафмана в файл
 void WriteTable(CountOfSymbols symbolsCount, string filePath)
 {
@@ -113,8 +110,6 @@ void WriteTable(CountOfSymbols symbolsCount, string filePath)
 
 CountOfSymbols CountingSymbols(const string &input_str)
 {
-    auto ASCII = createASCIITable();
-
     CountOfSymbols countOfSymbols;
 
     string str = input_str;
@@ -131,6 +126,35 @@ CountOfSymbols CountingSymbols(const string &input_str)
     }
 
     return countOfSymbols;
+}
+
+void HuffmanTable(CountOfSymbols numberOfSymbols)
+{
+    for (const auto lineSymbolsCursor : numberOfSymbols)
+    {
+        auto fullMap = lineSymbolsCursor.second;
+
+        map<char, int> mapSymbols;
+
+        // Собираем новый хэш со значениями != 0
+        for (const auto columnSymbolCursor : fullMap)
+        {
+            if (columnSymbolCursor.second != 0)
+            {
+                mapSymbols[columnSymbolCursor.first] = columnSymbolCursor.second;
+            }
+        }
+
+        auto HuffmanTree = InitHuffmanTree(mapSymbols);
+
+        FillHuffmanTree(HuffmanTree);
+
+        //root - указатель на вершину дерева
+        Node *root = HuffmanTree.front();
+
+        ////// создаем пары 'символ-код':
+        auto EncyptedTable = CreateEncyptedTable(root);
+    }
 }
 
 int main()
@@ -157,6 +181,8 @@ int main()
     }
 
     auto numberOfSymbols = CountingSymbols(fullText);
+
+    HuffmanTable(numberOfSymbols);
 
     infile.close();
 

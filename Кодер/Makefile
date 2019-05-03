@@ -1,2 +1,2 @@
 main:
-	g++ main.cpp -o Coder.exe
+	g++ main.cpp Huffman/Huffman.cpp -o Coder.exe

@@ -4,78 +4,99 @@
 #include <list>
 #include <fstream>
 #include <assert.h>
+#include <functional>
 #include "./Huffman.hpp"
 
-struct Node
+// struct Node
+// {
+//     int BinaryCode;     // Число
+//     char Character;     //Символ
+//     Node *left, *right; //Указатель  узел
+
+//     Node() { left = right = NULL; }
+
+//     Node(Node *L, Node *R) //Конструктор на создание узла
+//     {
+//         left = L;
+//         right = R;
+//         BinaryCode = L->BinaryCode + R->BinaryCode;
+//     }
+// };
+
+// Определение логики конструкторов
+Node::Node() { left = right = NULL; }
+
+Node::Node(Node *L, Node *R)
 {
-    int BinaryCode;     // Число
-    char Character;     //Символ
-    Node *left, *right; //Указатель  узел
+    left = L;
+    right = R;
+    BinaryCode = L->BinaryCode + R->BinaryCode;
+}
 
-    Node() { left = right = NULL; }
-
-    Node(Node *L, Node *R) //Конструктор на создание узла
-    {
-        left = L;
-        right = R;
-        BinaryCode = L->BinaryCode + R->BinaryCode;
-    }
-};
-
-struct MyCompare
-{
-    bool operator()(const Node *l, const Node *r) const { return l->BinaryCode < r->BinaryCode; }
-};
+bool MyCompare::operator()(const Node *l, const Node *r) const { return l->BinaryCode < r->BinaryCode; }
 
 std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполнение таллицы
 {
+    if (root == NULL)
+        return std::map<char, std::vector<bool>>();
+
     // Создание статической переменной для того, чтобы ее значения были одинаковыми во время рекурсии
-    static std::map<char, std::vector<bool>> table;
-    static std::vector<bool> code;
+    std::map<char, std::vector<bool>> table;
+    std::vector<bool> code;
 
     // Создание лямбда выражения которое берет по ссылке все значения из CreateTable
-    [&]() {
-        if (root->left != NULL)
+    std::function<void(Node *)> encryptTable = [&code, &table, &encryptTable](Node *leaf) {
+        if (leaf->left != NULL)
         {
             code.push_back(0);
-            CreateEncyptedTable(root->left);
+            encryptTable(leaf->left);
         }
 
-        if (root->right != NULL)
+        if (leaf->right != NULL)
         {
             code.push_back(1);
-            CreateEncyptedTable(root->right);
+            encryptTable(leaf->right);
         }
 
-        if (root->left == NULL && root->right == NULL)
-            table[root->Character] = code;
+        // Если нам приходит текст из 1-ого символа то код пустой, что бы этого избежать мы записываем код для этого символа = 0
+        if (code.empty())
+        {
+            code.push_back(0);
+        }
 
-        code.pop_back(); // Удаление одного символа с конца
-    }();
+        if (leaf->left == NULL && leaf->right == NULL)
+        {
+            table[leaf->Character] = code;
+        }
+
+        // code.pop_back(); // Удаление одного символа с конца
+    };
+
+    encryptTable(root);
 
     return table;
 }
 
 ////// считаем частоты символов
-std::map<char, int> CountOfSymbolsFromFile(ifstream &file)
+std::map<char, int> CountOfSymbolsFromFile(std::ifstream &file)
 {
-    std::map<char, int> std::mapSymbols;
+    std::map<char, int> mapSymbols;
 
     char c;
     while (file.get(c))
     {
-        std::mapSymbols[c]++;
+        mapSymbols[c]++;
     }
 
-    return std::mapSymbols;
+    return mapSymbols;
 }
 
 ////// записываем начальные узлы в список list
-list<Node *> InitHuffmanTree(std::map<char, int> std::mapSymbols)
+std::list<Node *> InitHuffmanTree(std::map<char, int> mapSymbols)
 {
-    list<Node *> HuffmanTree;
+    std::list<Node *> HuffmanTree;
 
-    for (std::map<char, int>::iterator itr = std::mapSymbols.begin(); itr != std::mapSymbols.end(); ++itr)
+    for (std::map<char, int>::iterator itr = mapSymbols.begin(); itr != mapSymbols.end(); ++itr)
     {
         Node *p = new Node; //Создание в динамической память нового узла
         p->Character = itr->first;
@@ -87,8 +108,11 @@ list<Node *> InitHuffmanTree(std::map<char, int> std::mapSymbols)
 }
 
 ////// Cоздаем дерево
-void FillHuffmanTree(list<Node *> &HuffmanTree)
+void FillHuffmanTree(std::list<Node *> &HuffmanTree)
 {
+    if (HuffmanTree.empty())
+        return;
+
     while (HuffmanTree.size() != 1)
     {
         HuffmanTree.sort(MyCompare()); // сортировка списка
@@ -96,24 +120,24 @@ void FillHuffmanTree(list<Node *> &HuffmanTree)
         Node *SonL = HuffmanTree.front();
         HuffmanTree.pop_front();
         Node *SonR = HuffmanTree.front();
-        HuffmanTree.pop_frontstd::();
+        HuffmanTree.pop_front();
 
-        std::Node *parent = new Node(SonL, SonR); //Создание узла
-        std::HuffmanTree.push_back(parent);
+        Node *parent = new Node(SonL, SonR); //Создание узла
+        HuffmanTree.push_back(parent);
     }
 }
 
 // Кодируем файл, записываем коды символов в выходной файл с результатом
-void EncriptFile(ifstream &fileIn, ofstream &fileOut, std::map<char, std::vector<bool>> table, string Separator)
+void EncriptFile(std::ifstream &fileIn, std::ofstream &fileOut, std::map<char, std::vector<bool>> table, std::string Separator)
 {
-    string buf;
+    std::string buf;
 
     char c;
 
     //Считываение из файла
     while (fileIn.get(c))
     {
-        std::vector<bool> symbolCode = table[cstd::];
+        std::vector<bool> symbolCode = table[c];
 
         // Коверитрируем из вектора булевых значений в строку
         for (auto i : symbolCode)
@@ -132,10 +156,10 @@ void EncriptFile(ifstream &fileIn, ofstream &fileOut, std::map<char, std::vector
     }
 }
 
-void Decrypt(ifstream &fileIn, std::map<char, std::vector<bool>> table, string Separator)
+void Decrypt(std::ifstream &fileIn, std::map<char, std::vector<bool>> table, std::string Separator)
 {
     char character;
-    string bites;
+    std::string bites;
 
     std::vector<bool> characterMask;
 
@@ -176,13 +200,16 @@ void Decrypt(ifstream &fileIn, std::map<char, std::vector<bool>> table, string S
             bites.clear();
         }
     }
-    std::cout << endl;
+    std::cout << std::endl;
 }
 
 // Вывод таблицы кодов символов
 void PrintTable(std::map<char, std::vector<bool>> symbolsCodes)
 {
-    std::cout << "Symbol codes:" << endl;
+    if (symbolsCodes.empty())
+        return;
+
+    std::cout << "Symbol codes:" << std::endl;
     for (auto it = symbolsCodes.begin(); it != symbolsCodes.end(); ++it)
     {
         std::cout << it->first << " : ";
@@ -190,16 +217,16 @@ void PrintTable(std::map<char, std::vector<bool>> symbolsCodes)
         for (auto &&i : it->second)
             std::cout << i;
 
-        std::cout << endl;
+        std::cout << std::endl;
     }
-    std::cout << endl;
+    std::cout << std::endl;
 }
 
 // Вывод количиства количества символов
 void PrintSymbolsCount(std::map<char, int> symbolsCount)
 {
-    std::cout << "Count of symbols:" << endl;
+    std::cout << "Count of symbols:" << std::endl;
     for (auto it = symbolsCount.begin(); it != symbolsCount.end(); ++it)
-        std::cout << it->first << " : " << it->second << endl;
-    std::cout << endl;
+        std::cout << it->first << " : " << it->second << std::endl;
+    std::cout << std::endl;
 }
