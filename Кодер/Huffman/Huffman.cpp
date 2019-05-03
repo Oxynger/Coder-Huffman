@@ -7,22 +7,6 @@
 #include <functional>
 #include "./Huffman.hpp"
 
-// struct Node
-// {
-//     int BinaryCode;     // Число
-//     char Character;     //Символ
-//     Node *left, *right; //Указатель  узел
-
-//     Node() { left = right = NULL; }
-
-//     Node(Node *L, Node *R) //Конструктор на создание узла
-//     {
-//         left = L;
-//         right = R;
-//         BinaryCode = L->BinaryCode + R->BinaryCode;
-//     }
-// };
-
 // Определение логики конструкторов
 Node::Node() { left = right = NULL; }
 
@@ -40,7 +24,6 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
     if (root == NULL)
         return std::map<char, std::vector<bool>>();
 
-    // Создание статической переменной для того, чтобы ее значения были одинаковыми во время рекурсии
     std::map<char, std::vector<bool>> table;
     std::vector<bool> code;
 
@@ -58,10 +41,10 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
             encryptTable(leaf->right);
         }
 
-        // Если нам приходит текст из 1-ого символа то код пустой, что бы этого избежать мы записываем код для этого символа = 0
+        // Если нам приходит текст из 1-ого символа то код пустой, что бы этого избежать мы записываем код для этого символа = 1
         if (code.empty())
         {
-            code.push_back(0);
+            code.push_back(1);
         }
 
         if (leaf->left == NULL && leaf->right == NULL)
@@ -69,7 +52,7 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
             table[leaf->Character] = code;
         }
 
-        // code.pop_back(); // Удаление одного символа с конца
+        code.pop_back(); // Удаление одного символа с конца
     };
 
     encryptTable(root);
@@ -128,7 +111,7 @@ void FillHuffmanTree(std::list<Node *> &HuffmanTree)
 }
 
 // Кодируем файл, записываем коды символов в выходной файл с результатом
-void EncriptFile(std::ifstream &fileIn, std::ofstream &fileOut, std::map<char, std::vector<bool>> table, std::string Separator)
+void EncryptFile(std::ifstream &fileIn, std::ofstream &fileOut, std::map<char, std::vector<bool>> table, std::string Separator)
 {
     std::string buf;
 

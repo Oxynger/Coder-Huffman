@@ -28,6 +28,37 @@ private:
         return "";
     }
 
+    void WriteInFile(ofstream &out)
+    {
+        for (auto LineCursor = this->begin(); LineCursor != this->end(); LineCursor++)
+        {
+            auto Line = LineCursor->second;
+
+            for (auto Number = Line.begin(); Number != Line.end(); Number++)
+            {
+                out << Number->second << " ";
+            }
+
+            out << endl;
+        }
+    }
+
+    void CountingSymbols(const string &input_str)
+    {
+        string str = input_str;
+
+        char FirstLetter = str.at(0);
+
+        for (int i = 1; i < str.length(); i++)
+        {
+            char SecondLetter = str.at(i);
+
+            (*this)[FirstLetter][SecondLetter]++;
+
+            FirstLetter = SecondLetter;
+        }
+    }
+
 public:
     CountOfSymbols() : map()
     {
@@ -40,6 +71,15 @@ public:
             }
         }
     }
+
+    CountOfSymbols(string text)
+    {
+        CountOfSymbols c;
+        c.CountingSymbols(text);
+
+        (*this) = c;
+    }
+
     string FormatOutput()
     {
         stringstream OutputString;
@@ -62,19 +102,161 @@ public:
         return OutputString.str();
     }
 
+    // Записываем количесвто символов в файл
+    void WriteTable(string filePath)
+    {
+        ofstream out(filePath, ios_base::app);
+
+        if (out.is_open())
+        {
+            cout << this->FormatOutput() << endl;
+            this->WriteInFile(out);
+        }
+
+        out.close();
+    }
+};
+
+class CoderTable : public map<char, map<char, vector<bool>>>
+{
+private:
+    uint encodingBites = 255;
+    char emptyCode = '-';
+
     void WriteInFile(ofstream &out)
     {
-        for (auto LineCursor = this->begin(); LineCursor != this->end(); LineCursor++)
+        for (auto LineCursor : (*this))
         {
-            auto Line = LineCursor->second;
-
-            for (auto Number = Line.begin(); Number != Line.end(); Number++)
+            for (auto columnsCursor : LineCursor.second)
             {
-                out << Number->second << " ";
+
+                // Выводим символ пустого кода
+                if (columnsCursor.second.empty())
+                {
+                    out << emptyCode;
+                }
+
+                for (auto binary : columnsCursor.second)
+                {
+                    out << binary;
+                }
+                out << " ";
             }
 
             out << endl;
         }
+    }
+
+    string converServiceSymbols(char Symbol)
+    {
+        switch ((int)Symbol)
+        {
+        case 13:
+            return "Enter";
+
+        case 32:
+            return "Space";
+        default:
+            return string(1, Symbol);
+        }
+        return "";
+    }
+
+    void Encrypt(CountOfSymbols numberOfSymbols)
+    {
+        for (const auto lineSymbolsCursor : numberOfSymbols)
+        {
+            auto fullMap = lineSymbolsCursor.second;
+
+            map<char, int> mapSymbols;
+
+            // Собираем новый хэш со значениями != 0
+            for (const auto columnSymbolCursor : fullMap)
+            {
+                if (columnSymbolCursor.second != 0)
+                    mapSymbols[columnSymbolCursor.first] = columnSymbolCursor.second;
+            }
+
+            auto HuffmanTree = InitHuffmanTree(mapSymbols);
+
+            FillHuffmanTree(HuffmanTree);
+
+            //root - указатель на вершину дерева
+            Node *root = HuffmanTree.front();
+
+            ////// создаем пары 'символ-код':
+            auto encryptedHuffman = CreateEncyptedTable(root);
+
+            for (auto encrypted : encryptedHuffman)
+            {
+                (*this)[lineSymbolsCursor.first][encrypted.first] = encrypted.second;
+            }
+        }
+    }
+
+public:
+    CoderTable() : map()
+    {
+        // Заполняем коды символов 0-ми
+        for (int line = 0; line < encodingBites; line++)
+        {
+            for (int column = 0; column < encodingBites; column++)
+            {
+                (*this)[line][column] = vector<bool>(0);
+            }
+        }
+    }
+
+    CoderTable(CountOfSymbols count)
+    {
+        CoderTable c;
+        c.Encrypt(count);
+
+        (*this) = c;
+    }
+    // Красивый вывод в коннсоль
+    string FormatOutput()
+    {
+        stringstream OutputString;
+
+        OutputString << "Symbol codes:" << endl;
+        for (auto LineCursor : (*this))
+        {
+
+            auto Line = LineCursor.second;
+            for (auto ColumnCursor : Line)
+            {
+                auto code = ColumnCursor.second;
+
+                if (!code.empty())
+                {
+                    OutputString << converServiceSymbols(LineCursor.first) << " -> ";
+                    OutputString << converServiceSymbols(ColumnCursor.first) << " : ";
+                    for (auto binary : code)
+                    {
+
+                        OutputString << binary;
+                    }
+                    OutputString << endl;
+                }
+            }
+        }
+
+        return OutputString.str();
+    }
+
+    // Записываем количесвто символов в файл
+    void WriteTable(string filePath)
+    {
+        ofstream out(filePath, ios_base::app);
+
+        if (out.is_open())
+        {
+            cout << this->FormatOutput() << endl;
+            this->WriteInFile(out);
+        }
+
+        out.close();
     }
 };
 
@@ -92,69 +274,6 @@ map<char, int> createASCIITable()
         ASCII[(char)i] = i;
 
     return ASCII;
-}
-
-// Записываем таблицу хафмана в файл
-void WriteTable(CountOfSymbols symbolsCount, string filePath)
-{
-    ofstream out(filePath, ios_base::app);
-
-    if (out.is_open())
-    {
-        cout << symbolsCount.FormatOutput() << endl;
-        symbolsCount.WriteInFile(out);
-    }
-
-    out.close();
-}
-
-CountOfSymbols CountingSymbols(const string &input_str)
-{
-    CountOfSymbols countOfSymbols;
-
-    string str = input_str;
-
-    char FirstLetter = str.at(0);
-
-    for (int i = 1; i < str.length(); i++)
-    {
-        char SecondLetter = str.at(i);
-
-        countOfSymbols[FirstLetter][SecondLetter]++;
-
-        FirstLetter = SecondLetter;
-    }
-
-    return countOfSymbols;
-}
-
-void HuffmanTable(CountOfSymbols numberOfSymbols)
-{
-    for (const auto lineSymbolsCursor : numberOfSymbols)
-    {
-        auto fullMap = lineSymbolsCursor.second;
-
-        map<char, int> mapSymbols;
-
-        // Собираем новый хэш со значениями != 0
-        for (const auto columnSymbolCursor : fullMap)
-        {
-            if (columnSymbolCursor.second != 0)
-            {
-                mapSymbols[columnSymbolCursor.first] = columnSymbolCursor.second;
-            }
-        }
-
-        auto HuffmanTree = InitHuffmanTree(mapSymbols);
-
-        FillHuffmanTree(HuffmanTree);
-
-        //root - указатель на вершину дерева
-        Node *root = HuffmanTree.front();
-
-        ////// создаем пары 'символ-код':
-        auto EncyptedTable = CreateEncyptedTable(root);
-    }
 }
 
 int main()
@@ -180,14 +299,15 @@ int main()
         }
     }
 
-    auto numberOfSymbols = CountingSymbols(fullText);
+    CountOfSymbols numberOfSymbols(fullText);
 
-    HuffmanTable(numberOfSymbols);
+    CoderTable HuffmanTable(numberOfSymbols);
 
     infile.close();
 
     clear_file(outFile);
-    WriteTable(numberOfSymbols, outFile);
+
+    HuffmanTable.WriteTable(outFile);
 
     return 0;
 }
