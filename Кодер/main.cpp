@@ -18,11 +18,11 @@ private:
         {
         case 13:
             return "Enter";
-        
+
         case 32:
             return "Space";
         default:
-            return string(1,Symbol);
+            return string(1, Symbol);
         }
         return "";
     }
