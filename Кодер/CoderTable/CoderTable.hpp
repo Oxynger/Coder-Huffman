@@ -89,6 +89,10 @@ private:
     void outCodes(std::ofstream &out)
     {
         auto firstSymbol = this->text.at(0);
+
+        // Удаляем первый символ, он уже не нужен
+        this->text.erase(0,1);
+
         out << firstSymbol;
         for (auto c : this->text)
         {
@@ -110,9 +114,6 @@ private:
 
         char firstSymbol = in.get();
         out << firstSymbol;
-
-        // Пропуск пробела
-        in.get();
 
         // Конвертирует строку с кодом символа в
         auto stringToMask = [&]() {
