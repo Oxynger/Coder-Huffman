@@ -21,9 +21,14 @@ CoderTable::CoderTable() : map()
 CoderTable::CoderTable(CountSymbols count)
 {
     CoderTable c;
-    c.Encrypt(count);
+    c.encryptTable(count);
 
     (*this) = c;
+}
+
+CoderTable::CoderTable(CountSymbols count, std::string text) : CoderTable(count)
+{
+    this->text = text;
 }
 
 std::string CoderTable::FormatOutput()
@@ -59,12 +64,34 @@ std::string CoderTable::FormatOutput()
 void CoderTable::WriteTable(std::string filePath)
 {
     std::ofstream out(filePath, std::ios_base::app);
+    if (!out.is_open())
+        throw "error: " + filePath + "not open";
 
-    if (out.is_open())
-    {
-        std::cout << this->FormatOutput() << std::endl;
-        this->WriteInFile(out);
-    }
+    std::cout << this->FormatOutput() << std::endl;
+    this->WriteInFile(out);
 
     out.close();
+}
+
+void CoderTable::Encrypt(std::string filePath)
+{
+    std::ofstream out(filePath, std::ios_base::app);
+    if (!out.is_open())
+        throw "error: " + filePath + "not open";
+    
+    this->outCodes(out);
+
+}
+
+void CoderTable::Decrypt(std::string EncodedFile, std::string DecodedFile)
+{
+    std::ofstream out(EncodedFile, std::ios_base::app);
+    if (!out.is_open())
+        throw "error: " + EncodedFile + "not open";
+    
+    std::fstream in(DecodedFile, std::ios::in); 
+    if (!out.is_open())
+        throw "error: " + DecodedFile + "not open";
+
+    this->outDecodedText(out, in);
 }

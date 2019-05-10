@@ -9,6 +9,8 @@ class CoderTable : public std::map<char, std::map<char, std::vector<bool>>>
 private:
     uint encodingBites = 255;
     char emptyCode = '-';
+    std::string text = "";
+    std::string Separator = " ";
 
     // Запись в файл таблицы кодов последовательностей букв
     void WriteInFile(std::ofstream &out)
@@ -52,7 +54,7 @@ private:
     }
 
     // Полусить таблицу кодов из таблицы количества символов
-    void Encrypt(CountSymbols numberOfSymbols)
+    void encryptTable(CountSymbols numberOfSymbols)
     {
         for (const auto lineSymbolsCursor : numberOfSymbols)
         {
@@ -84,6 +86,71 @@ private:
         }
     }
 
+    void outCodes(std::ofstream &out)
+    {
+        auto firstSymbol = this->text.at(0);
+        out << firstSymbol;
+        for (auto c : this->text)
+        {
+            for (auto binary : this->at(firstSymbol).at(c))
+            {
+                out << binary;
+            }
+            out << this->Separator;
+
+            firstSymbol = c;
+        }
+    }
+
+    void outDecodedText(std::ofstream &out, std::fstream &in)
+    {
+        char symbol;
+        std::string bites;
+        std::vector<bool> charactersMask;
+
+        char firstSymbol = in.get();
+        out << firstSymbol;
+
+        // Пропуск пробела
+        in.get();
+
+        // Конвертирует строку с кодом символа в
+        auto stringToMask = [&]() {
+            for (auto bite : bites)
+                // Если код символа равен символу 1 то записываем true иначе false
+                charactersMask.push_back(bite == '1');
+        };
+
+        // Поиск символа по битовой маске ( коду ) в таблице с алфавитом
+        auto findSymbolByCode = [&]() {
+            for (auto it : (*this).at(firstSymbol))
+            {
+                if (it.second == charactersMask)
+                {
+                    out << it.first;
+                    firstSymbol = it.first;
+                }
+            }
+        };
+
+        while (in.get(symbol))
+        {
+            // Прверка что мы не дошли до разделителя
+            if (symbol != *this->Separator.data())
+            {
+                bites += symbol;
+            }
+            else
+            {
+                stringToMask();
+                findSymbolByCode();
+
+                charactersMask.clear();
+                bites.clear();
+            }
+        }
+    }
+
 public:
     // Заполнить коды последовательностей букв нулями
     CoderTable();
@@ -91,11 +158,20 @@ public:
     // Заполнить коды последовательностей букв по количеству символов
     CoderTable(CountSymbols);
 
+    // Запоминает строку для работы
+    CoderTable(CountSymbols, std::string);
+
     // Формирует удобо читаемый вывод таблицы
     std::string FormatOutput();
 
     // Записываем коды последователностей букв в файл
     void WriteTable(std::string);
+
+    // Закодирвоать сообщение
+    void Encrypt(std::string);
+
+    // Раскодировать сообщение
+    void Decrypt(std::string, std::string);
 };
 
 #endif

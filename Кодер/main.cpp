@@ -27,8 +27,10 @@ map<char, int> createASCIITable()
 
 int main()
 {
-    string outFile = "out_tab.txt";
+    string outTable = "out_tab.txt";
+    string codes = "out_code.txt";
     string openedFile = "inp.txt";
+    string outDecrypt = "out_msg.txt";
 
     setlocale(LC_ALL, "Russian");
 
@@ -50,13 +52,17 @@ int main()
 
     CountSymbols numberOfSymbols(fullText);
 
-    CoderTable HuffmanTable(numberOfSymbols);
+    CoderTable HuffmanTable(numberOfSymbols, fullText);
 
     infile.close();
 
-    clear_file(outFile);
+    clear_file(outTable);
+    clear_file(codes);
+    clear_file(outDecrypt);
 
-    HuffmanTable.WriteTable(outFile);
+    HuffmanTable.WriteTable(outTable);
+    HuffmanTable.Encrypt(codes);
+    HuffmanTable.Decrypt(outDecrypt, codes);
 
     return 0;
 }
