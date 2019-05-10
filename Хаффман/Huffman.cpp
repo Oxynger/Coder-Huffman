@@ -4,6 +4,7 @@
 #include <list>
 #include <fstream>
 #include <assert.h>
+#include <chrono>
 
 using namespace std;
 
@@ -209,6 +210,12 @@ int main(int argc, char *argv[])
 {
 	ifstream fileIn("1.txt", ios::out | ios::binary);
 
+	const string benchFile = "Huffman_bench.txt";
+    std::ofstream benchOut(benchFile, ios::out);
+	
+    // Начало отчета времени.
+    auto start = std::chrono::high_resolution_clock::now();
+
 	auto mapSymbols = CountOfSymbolsFromFile(fileIn);
 
 	PrintSymbolsCount(mapSymbols);
@@ -245,6 +252,16 @@ int main(int argc, char *argv[])
 	setlocale(LC_ALL, "Russian"); // чтоб русские символы отображались в командной строке
 
 	Decrypt(DecryptedFile, EncyptedTable, Separator);
+
+	
+    // Конец отчета времени
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Прошедшее время в милисекундах
+    auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // Вывод времени в файл
+    benchOut << "milliseconds: " << elapsedMilliseconds << endl;
 
 	DecryptedFile.close();
 
