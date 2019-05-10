@@ -1,2 +1,2 @@
 main:
-	g++ Huffman.cpp -o Huffman.exe
+	g++ Huffman.cpp -o Huffman.exe -Ofast
