@@ -58,7 +58,7 @@ int main()
     fstream infile;
     infile.open(openedFile, ios::in);
     std::ofstream benchOut(benchFile, ios::out);
-    
+
     auto fullText = getTextFromFile(infile);
 
     clear_file(outTable);
@@ -77,10 +77,13 @@ int main()
     HuffmanTable.Encrypt(codes);
     HuffmanTable.Decrypt(outDecrypt, codes);
 
+    // Конец отчета времени
     auto end = std::chrono::high_resolution_clock::now();
 
-    auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    // Прошедшее время в милисекундах
+    auto elapsedMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+    // Вывод времени в файл
     benchOut << "milliseconds: " << elapsedMilliseconds << endl;
 
     return 0;
