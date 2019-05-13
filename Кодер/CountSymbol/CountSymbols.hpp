@@ -7,7 +7,7 @@
 class CountSymbols : public std::map<char, std::map<char, int>>
 {
 private:
-    const uint encodingBites = 255;
+    const int encodingBites = 255;
 
     // Функция которая заменяет служебные символы на их текст для вывода
     std::string converServiceSymbols(char Symbol)

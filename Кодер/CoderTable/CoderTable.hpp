@@ -7,7 +7,7 @@
 class CoderTable : public std::map<char, std::map<char, std::vector<bool>>>
 {
 private:
-    uint encodingBites = 255;
+    int encodingBites = 255;
     char emptyCode = '-';
     std::string text = "";
     std::string Separator = " ";
