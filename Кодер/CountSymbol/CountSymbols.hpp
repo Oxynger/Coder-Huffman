@@ -4,9 +4,11 @@
 #include <map>
 #include <fstream>
 
+// Наследуемся от контейнера map и делаем свою реализацию для хранения количества символов в тексте 
 class CountSymbols : public std::map<char, std::map<char, int>>
 {
 private:
+
     const int encodingBites = 255;
 
     // Функция которая заменяет служебные символы на их текст для вывода

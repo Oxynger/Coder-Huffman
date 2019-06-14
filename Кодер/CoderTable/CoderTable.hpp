@@ -4,6 +4,7 @@
 #include "../Huffman/Huffman.hpp"
 #include "../CountSymbol/CountSymbols.hpp"
 
+// следуемся от контейнера map и делаем свою реализацию для работы с таблицей кодов хафмана
 class CoderTable : public std::map<char, std::map<char, std::vector<bool>>>
 {
 private:
@@ -62,7 +63,7 @@ private:
 
             std::map<char, int> mapSymbols;
 
-            // Собираем новый хэш со значениями != 0
+            // Собираем новый хэш со значениями != 0 что бы были только коды тех символов с которыми мы работаем
             for (const auto columnSymbolCursor : fullMap)
             {
                 if (columnSymbolCursor.second != 0)
@@ -86,6 +87,7 @@ private:
         }
     }
 
+    // Записываем закодированный текст
     void outCodes(std::ofstream &out)
     {
         auto firstSymbol = this->text.at(0);
@@ -93,6 +95,7 @@ private:
         // Удаляем первый символ, он уже не нужен
         this->text.erase(0,1);
 
+        // Записываем первый символ для декодирования
         out << firstSymbol;
         for (auto c : this->text)
         {
@@ -106,6 +109,7 @@ private:
         }
     }
 
+    // Записываем декодированный текст
     void outDecodedText(std::ofstream &out, std::fstream &in)
     {
         char symbol;
@@ -115,7 +119,7 @@ private:
         char firstSymbol = in.get();
         out << firstSymbol;
 
-        // Конвертирует строку с кодом символа в
+        // Конвертирует строку с кодом символа в массив бит
         auto stringToMask = [&]() {
             for (auto bite : bites)
                 // Если код символа равен символу 1 то записываем true иначе false

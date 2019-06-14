@@ -45,7 +45,7 @@ void Decrypt(std::ifstream &, std::map<char, std::vector<bool>>, std::string);
 // Вывод таблицы кодов символов
 void PrintTable(std::map<char, std::vector<bool>>);
 
-// Вывод количиства количества символов
+// Вывод количиства символов
 void PrintSymbolsCount(std::map<char, int>);
 
 #endif

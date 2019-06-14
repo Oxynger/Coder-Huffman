@@ -19,7 +19,8 @@ Node::Node(Node *L, Node *R)
 
 bool MyCompare::operator()(const Node *l, const Node *r) const { return l->BinaryCode < r->BinaryCode; }
 
-std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполнение таллицы
+// Заполнение таллицы
+std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) 
 {
     if (root == NULL)
         return std::map<char, std::vector<bool>>();
@@ -27,7 +28,7 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
     std::map<char, std::vector<bool>> table;
     std::vector<bool> code;
 
-    // Создание лямбда выражения которое берет по ссылке все значения из CreateTable
+    // Создание лямбда выражения которое берет по ссылке все необходимые данные из CreateTable
     std::function<void(Node *)> encryptTable = [&code, &table, &encryptTable](Node *leaf) {
         if (leaf->left != NULL)
         {
@@ -52,7 +53,8 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
             table[leaf->Character] = code;
         }
 
-        code.pop_back(); // Удаление одного символа с конца
+        // Удаление одного символа с конца
+        code.pop_back(); 
     };
 
     encryptTable(root);
@@ -60,7 +62,7 @@ std::map<char, std::vector<bool>> CreateEncyptedTable(Node *root) //Заполн
     return table;
 }
 
-////// считаем частоты символов
+////// считаем частоты символов в файле
 std::map<char, int> CountOfSymbolsFromFile(std::ifstream &file)
 {
     std::map<char, int> mapSymbols;
@@ -139,6 +141,7 @@ void EncryptFile(std::ifstream &fileIn, std::ofstream &fileOut, std::map<char, s
     }
 }
 
+// Декодирование файла
 void Decrypt(std::ifstream &fileIn, std::map<char, std::vector<bool>> table, std::string Separator)
 {
     char character;
@@ -146,7 +149,7 @@ void Decrypt(std::ifstream &fileIn, std::map<char, std::vector<bool>> table, std
 
     std::vector<bool> characterMask;
 
-    // Конвертирует строку с кодом символа в
+    // Конвертирует строку с кодом символа в булевый массив
     auto stringToMask = [&]() {
         for (auto bite : bites)
             // Если код символа равен символу 1 то записываем true иначе false
@@ -173,7 +176,6 @@ void Decrypt(std::ifstream &fileIn, std::map<char, std::vector<bool>> table, std
         {
             bites += character;
         }
-
         else
         {
             stringToMask();
@@ -195,8 +197,10 @@ void PrintTable(std::map<char, std::vector<bool>> symbolsCodes)
     std::cout << "Symbol codes:" << std::endl;
     for (auto it = symbolsCodes.begin(); it != symbolsCodes.end(); ++it)
     {
+        // Вывод сиимвола
         std::cout << it->first << " : ";
 
+        // Вывод его кода
         for (auto &&i : it->second)
             std::cout << i;
 
@@ -205,11 +209,12 @@ void PrintTable(std::map<char, std::vector<bool>> symbolsCodes)
     std::cout << std::endl;
 }
 
-// Вывод количиства количества символов
+// Вывод количиства символов
 void PrintSymbolsCount(std::map<char, int> symbolsCount)
 {
     std::cout << "Count of symbols:" << std::endl;
-    for (auto it = symbolsCount.begin(); it != symbolsCount.end(); ++it)
-        std::cout << it->first << " : " << it->second << std::endl;
+    for (auto it : symbolsCount)
+        std::cout << it.first << " : " << it.second << std::endl;
+    
     std::cout << std::endl;
 }

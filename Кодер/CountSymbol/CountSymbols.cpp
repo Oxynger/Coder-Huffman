@@ -39,6 +39,7 @@ std::string CountSymbols::FormatOutput()
         }
     }
 
+    // Из потока получем строку
     return OutputString.str();
 }
 
@@ -46,11 +47,13 @@ void CountSymbols::WriteTable(std::string filePath)
 {
     std::ofstream out(filePath, std::ios_base::app);
 
-    if (out.is_open())
-    {
-        std::cout << this->FormatOutput() << std::endl;
-        this->WriteInFile(out);
-    }
+    if (!out.is_open())
+        throw "error: " + filePath + "not open";
+
+    // Выводим сформинрованную строку в консоль
+    std::cout << this->FormatOutput() << std::endl;
+    // Выводим таблицу с количеством сиволов в файл
+    this->WriteInFile(out);
 
     out.close();
 }

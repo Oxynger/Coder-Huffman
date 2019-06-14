@@ -33,6 +33,7 @@ CoderTable::CoderTable(CountSymbols count, std::string text) : CoderTable(count)
 
 std::string CoderTable::FormatOutput()
 {
+    // Поток который используется для форматирования
     std::stringstream OutputString;
 
     OutputString << "Symbol codes:" << std::endl;
@@ -50,7 +51,7 @@ std::string CoderTable::FormatOutput()
                 OutputString << converServiceSymbols(ColumnCursor.first) << " : ";
                 for (auto binary : code)
                 {
-
+                    // Вывод кода символа
                     OutputString << binary;
                 }
                 OutputString << std::endl;
@@ -58,6 +59,7 @@ std::string CoderTable::FormatOutput()
         }
     }
 
+    // Из потока получем строку
     return OutputString.str();
 }
 
@@ -67,7 +69,9 @@ void CoderTable::WriteTable(std::string filePath)
     if (!out.is_open())
         throw "error: " + filePath + "not open";
 
+    // Выводим сформинрованную строку в консоль
     std::cout << this->FormatOutput() << std::endl;
+    // Выводим таблицу кодов сиволов в файл
     this->WriteInFile(out);
 
     out.close();
@@ -78,9 +82,8 @@ void CoderTable::Encrypt(std::string filePath)
     std::ofstream out(filePath, std::ios_base::app);
     if (!out.is_open())
         throw "error: " + filePath + "not open";
-    
-    this->outCodes(out);
 
+    this->outCodes(out);
 }
 
 void CoderTable::Decrypt(std::string EncodedFile, std::string DecodedFile)
@@ -88,8 +91,8 @@ void CoderTable::Decrypt(std::string EncodedFile, std::string DecodedFile)
     std::ofstream out(EncodedFile, std::ios_base::app);
     if (!out.is_open())
         throw "error: " + EncodedFile + "not open";
-    
-    std::fstream in(DecodedFile, std::ios::in); 
+
+    std::fstream in(DecodedFile, std::ios::in);
     if (!out.is_open())
         throw "error: " + DecodedFile + "not open";
 
