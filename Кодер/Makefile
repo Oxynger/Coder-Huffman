@@ -1,2 +1,2 @@
 main:
-	g++ main.cpp Huffman/Huffman.cpp CountSymbol/CountSymbols.cpp CoderTable/CoderTable.cpp -o bin/Coder.exe -Ofast -mtune=native
+	g++ main.cpp Huffman/Huffman.cpp CountSymbol/CountSymbols.cpp CoderTable/CoderTable.cpp ExpendedCountSymbol/ExpendedCountSymbols.cpp ExpendedCoderTable/ExpendedCoderTable.cpp  -o bin/Coder.exe -Ofast -mtune=native

@@ -1,11 +1,12 @@
-#ifndef CODERTABLE_HPP
-#define CODERTABLE_HPP
+#ifndef EXPENDEDCODERTABLE_HPP
+#define EXPENDEDCODERTABLE_HPP
 
 #include "../Huffman/Huffman.hpp"
-#include "../CountSymbol/CountSymbols.hpp"
+#include "../ExpendedCountSymbol/ExpendedCountSymbols.hpp"
 
+// Так как вложенных циклов стало больше то увеличится время кодирования.
 // наследуемся от контейнера map и делаем свою реализацию для работы с таблицей кодов хафмана
-class CoderTable : public std::map<char, std::map<char, std::vector<bool>>>
+class ExpendedCoderTable : public std::map<char, std::map<char, std::map<char, std::vector<bool>>>>
 {
 private:
     int encodingBites = 255;
@@ -20,18 +21,20 @@ private:
         {
             for (auto columnsCursor : LineCursor.second)
             {
-
-                // Выводим символ пустого кода
-                if (columnsCursor.second.empty())
+                for (auto valueCursor : columnsCursor.second)
                 {
-                    out << emptyCode;
-                }
+                    // Выводим символ пустого кода
+                    if (valueCursor.second.empty())
+                    {
+                        out << emptyCode;
+                    }
 
-                for (auto binary : columnsCursor.second)
-                {
-                    out << binary;
+                    for (auto binary : valueCursor.second)
+                    {
+                        out << binary;
+                    }
+                    out << " ";
                 }
-                out << " ";
             }
 
             out << std::endl;
@@ -55,34 +58,38 @@ private:
     }
 
     // Полусить таблицу кодов из таблицы количества символов
-    void encryptTable(CountSymbols numberOfSymbols)
+    void encryptTable(ExpendedCountSymbols numberOfSymbols)
     {
-        for (const auto lineSymbolsCursor : numberOfSymbols)
+        for (auto pageSymbolsCursor : numberOfSymbols)
         {
-            auto fullMap = lineSymbolsCursor.second;
-
-            std::map<char, int> mapSymbols;
-
-            // Собираем новый хэш со значениями != 0 что бы были только коды тех символов с которыми мы работаем
-            for (const auto columnSymbolCursor : fullMap)
+            auto pageSymbols = pageSymbolsCursor.second;
+            for (const auto lineSymbolsCursor : pageSymbols)
             {
-                if (columnSymbolCursor.second != 0)
-                    mapSymbols[columnSymbolCursor.first] = columnSymbolCursor.second;
-            }
+                auto fullMap = lineSymbolsCursor.second;
 
-            auto HuffmanTree = InitHuffmanTree(mapSymbols);
+                std::map<char, int> mapSymbols;
 
-            FillHuffmanTree(HuffmanTree);
+                // Собираем новый хэш со значениями != 0 что бы были только коды тех символов с которыми мы работаем
+                for (const auto columnSymbolCursor : fullMap)
+                {
+                    if (columnSymbolCursor.second != 0)
+                        mapSymbols[columnSymbolCursor.first] = columnSymbolCursor.second;
+                }
 
-            //root - указатель на вершину дерева
-            Node *root = HuffmanTree.front();
+                auto HuffmanTree = InitHuffmanTree(mapSymbols);
 
-            ////// создаем пары 'символ-код':
-            auto encryptedHuffman = CreateEncyptedTable(root);
+                FillHuffmanTree(HuffmanTree);
 
-            for (auto encrypted : encryptedHuffman)
-            {
-                (*this)[lineSymbolsCursor.first][encrypted.first] = encrypted.second;
+                //root - указатель на вершину дерева
+                Node *root = HuffmanTree.front();
+
+                ////// создаем пары 'символ-код':
+                auto encryptedHuffman = CreateEncyptedTable(root);
+
+                for (auto encrypted : encryptedHuffman)
+                {
+                    (*this)[pageSymbolsCursor.first][lineSymbolsCursor.first][encrypted.first] = encrypted.second;
+                }
             }
         }
     }
@@ -91,21 +98,24 @@ private:
     void outCodes(std::ofstream &out)
     {
         auto firstSymbol = this->text.at(0);
+        auto secondSymbol = this->text.at(1);
 
-        // Удаляем первый символ, он уже не нужен
-        this->text.erase(0,1);
+        // Удаляем два первых симовла, он уже не нужен
+        this->text.erase(0, 2);
 
-        // Записываем первый символ для декодирования
-        out << firstSymbol;
+        // Записываем два первых символа для декодирования
+        out << firstSymbol << secondSymbol;
         for (auto c : this->text)
         {
-            for (auto binary : this->at(firstSymbol).at(c))
+            for (auto binary : this->at(firstSymbol).at(secondSymbol).at(c))
             {
                 out << binary;
             }
             out << this->Separator;
 
-            firstSymbol = c;
+            firstSymbol = secondSymbol;
+            secondSymbol = c;
+            
         }
     }
 
@@ -118,6 +128,9 @@ private:
 
         char firstSymbol = in.get();
         out << firstSymbol;
+        char secondSymbol = in.get();
+        out << secondSymbol;
+        
 
         // Конвертирует строку с кодом символа в массив бит
         auto stringToMask = [&]() {
@@ -128,12 +141,13 @@ private:
 
         // Поиск символа по битовой маске ( коду ) в таблице с алфавитом
         auto findSymbolByCode = [&]() {
-            for (auto it : (*this).at(firstSymbol))
+            for (auto it : (*this).at(firstSymbol).at(secondSymbol))
             {
                 if (it.second == charactersMask)
                 {
                     out << it.first;
-                    firstSymbol = it.first;
+                    firstSymbol = secondSymbol;
+                    secondSymbol = it.first;
                 }
             }
         };
@@ -158,13 +172,13 @@ private:
 
 public:
     // Заполнить коды последовательностей букв нулями
-    CoderTable();
+    ExpendedCoderTable();
 
     // Заполнить коды последовательностей букв по количеству символов
-    CoderTable(CountSymbols);
+    ExpendedCoderTable(ExpendedCountSymbols);
 
     // Запоминает строку для работы
-    CoderTable(CountSymbols, std::string);
+    ExpendedCoderTable(ExpendedCountSymbols, std::string);
 
     // Формирует удобо читаемый вывод таблицы
     std::string FormatOutput();
